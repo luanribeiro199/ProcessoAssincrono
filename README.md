@@ -1,59 +1,122 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+Sistema de Processamento de Pedidos Assíncronos – Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+📌 Descrição do Projeto
+Este projeto é um sistema que simula o processamento assíncrono de pedidos em um e-commerce, utilizando **Laravel**, **Jobs**, **Queues** e **API RESTful**.  
+O objetivo é demonstrar como operações demoradas (como cálculo de frete e envio de notificações) podem ser realizadas em background enquanto a API permanece rápida e responsiva.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+🚀 Funcionalidades
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### ✔ Criação de Pedidos (API)
+- Endpoint: **POST /api/orders**
+- Salva o pedido com status inicial **pending**
+- Despacha automaticamente um job para processamento assíncrono
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### ✔ Processamento Assíncrono (Queues)
+O Job `ProcessOrderJob` realiza:
+1. Simulação de cálculo de frete → `sleep(5)`
+2. Atualização do status para **processing**
+3. Simulação de envio de notificação → `sleep(2)`
+4. Atualização do status para **completed**
 
-## Learning Laravel
+### ✔ Relacionamentos
+- Order (1) → (N) OrderItems  
+- Utiliza Eloquent Models e Migrations
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### ✔ Testes Automatizados
+Inclui no mínimo:
+- Teste de criação de pedido (HTTP 201)
+- Teste de verificação do disparo do Job para a fila
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+🛠 Como Rodar o Projeto
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 1️⃣ Clonar o Repositório
+```
+git clone <seu-repositorio>
+cd <pasta-do-projeto>
+```
 
-### Premium Partners
+### 2️⃣ Instalar Dependências
+```
+composer install
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 3️⃣ Configurar o .env
+```
+cp .env.example .env
+php artisan key:generate
+```
 
-## Contributing
+Configure o banco (recomendado sqlite para testes):
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```
+DB_CONNECTION=sqlite
+DB_DATABASE=database/database.sqlite
+```
 
-## Code of Conduct
+Crie o arquivo:
+```
+touch database/database.sqlite
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 4️⃣ Rodar as Migrations
+```
+php artisan migrate
+```
 
-## Security Vulnerabilities
+### 5️⃣ Iniciar o Queue Worker
+Em um terminal:
+```
+php artisan queue:work
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 6️⃣ Testar a API
+Exemplo de body:
+```json
+{
+  "customer_name": "Luan Ribeiro",
+  "items": [
+    { "product": "Teclado", "price": 150, "quantity": 1 },
+    { "product": "Mouse", "price": 80, "quantity": 2 }
+  ]
+}
+```
 
-## License
+Faça o POST via Insomnia/Postman:  
+`http://localhost:8000/api/orders`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 7️⃣ Rodar Testes
+```
+php artisan test
+```
+
+---
+
+📂 Estrutura Esperada do Projeto
+- app/Models/Order.php  
+- app/Models/OrderItem.php  
+- app/Http/Controllers/OrderController.php  
+- app/Jobs/ProcessOrderJob.php  
+- database/migrations/\*  
+- tests/Feature/OrderTest.php  
+
+---
+
+🎯 Objetivo do Projeto
+Demonstrar, em um ambiente real de API, como separar tarefas demoradas para background usando o sistema de filas do Laravel, garantindo performance e escalabilidade.
+
+---
+
+---
+
+🎬 Entregas
+Vídeo explicativo no youtube: https://youtu.be/H37Bs_8QzEM 
+Link do github: https://github.com/luanribeiro199/ProcessoAssincrono.git 
+
+---
+
+👤 Autor
+Luan Vinicius Ribeiro  
